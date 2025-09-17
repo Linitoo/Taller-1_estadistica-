@@ -1,42 +1,61 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-st.title("🌱 Recomendación de Cultivos - Análisis Estadístico")
+st.title("🌱 Recomendación de Cultivos - Análisis Exploratorio")
 
 # ==============================
 # 1. Cargar dataset
 # ==============================
 @st.cache_data
 def load_data():
-    # El archivo debe estar en la misma carpeta del repo
     return pd.read_csv("Crop_recommendation.csv")
 
 df = load_data()
 
-st.subheader("Vista previa del dataset")
+# ==============================
+# 2. Vista previa y estadísticas
+# ==============================
+st.subheader("📋 Vista previa del dataset")
 st.dataframe(df.head())
 
-# ==============================
-# 2. Estadísticas descriptivas
-# ==============================
-st.subheader("Estadísticas descriptivas")
-st.write(df.describe())
+if st.checkbox("Mostrar estadísticas descriptivas"):
+    st.write(df.describe())
 
 # ==============================
-# 3. Heatmap de correlación
+# 3. Histograma interactivo
 # ==============================
-st.subheader("Mapa de correlación entre variables")
-plt.figure(figsize=(10, 6))
+st.subheader("📊 Histograma interactivo")
+columna = st.sidebar.selectbox("Selecciona variable numérica", df.select_dtypes(include="number").columns)
+
+fig, ax = plt.subplots()
+sns.histplot(df[columna], kde=True, ax=ax)
+st.pyplot(fig)
+
+# ==============================
+# 4. Scatter plot interactivo
+# ==============================
+st.subheader("🔍 Relación entre variables (Scatter)")
+x_var = st.sidebar.selectbox("Eje X", df.select_dtypes(include="number").columns)
+y_var = st.sidebar.selectbox("Eje Y", df.select_dtypes(include="number").columns)
+
+fig, ax = plt.subplots()
+sns.scatterplot(x=df[x_var], y=df[y_var], ax=ax)
+st.pyplot(fig)
+
+# ==============================
+# 5. Heatmap de correlación
+# ==============================
+st.subheader("🔥 Matriz de correlación")
+fig, ax = plt.subplots(figsize=(10,6))
 corr = df.corr(numeric_only=True)
-sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f")
-st.pyplot(plt)
+sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
+st.pyplot(fig)
 
 # ==============================
-# 4. Promedios de N, P, K por cultivo
+# 6. Promedios por cultivo
 # ==============================
-st.subheader("Promedio de N, P, K por cultivo")
+st.subheader("🌾 Promedio de N, P, K por cultivo")
 promedios = df.groupby("label")[["N", "P", "K"]].mean()
 st.dataframe(promedios)
